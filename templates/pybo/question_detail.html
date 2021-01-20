@@ -1,15 +1,56 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div class="container my-3">
+<div class="container my-3">
     <h2 class="border-bottom py-2">{{ question.subject }}</h2>
     <div class="card my-3">
         <div class="card-body">
             <div class="card-text" style="white-space: pre-line;">{{ question.content }}</div>
             <div class="d-flex justify-content-end">
-                <div class="badge badge-light p-2">
-                    {{ question.create_date }}
+                {% if question.modify_date %}
+                <div class="badge badge-light p-2 text-left mx-3">
+                    <div class="mb-2">modified at</div>
+                    <div>{{ question.modify_date }}</div>
+                </div>
+                {% endif %}
+                <div class="badge badge-light p-2 text-left">
+                    <div class="mb-2">{{ question.author.username }}</div>
+                    <div>{{ question.create_date }}</div>
                 </div>
             </div>
+            {% if request.user == question.author %}
+            <div class="my-3">
+                <a href="{% url 'pybo:question_modify' question.id  %}"
+                   class="btn btn-sm btn-outline-secondary">수정</a>
+                <a href="#" class="delete btn btn-sm btn-outline-secondary"
+                   data-uri="{% url 'pybo:question_delete' question.id  %}">삭제</a>
+            </div>
+            {% endif %}
+            <!-- 질문 댓글 Start -->
+            {% if question.comment_set.count > 0 %}
+            <div class="mt-3">
+            {% for comment in question.comment_set.all %}
+                <div class="comment py-2 text-muted">
+                    <span style="white-space: pre-line;">{{ comment.content }}</span>
+                    <span>
+                        - {{ comment.author }}, {{ comment.create_date }}
+                        {% if comment.modify_date %}
+                        (수정:{{ comment.modify_date }})
+                        {% endif %}
+                    </span>
+                    {% if request.user == comment.author %}
+                    <a href="{% url 'pybo:comment_modify_question' comment.id  %}" class="small">수정</a>,
+                    <a href="#" class="small delete"
+                       data-uri="{% url 'pybo:comment_delete_question' comment.id  %}">삭제</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+            {% endif %}
+            <div>
+                <a href="{% url 'pybo:comment_create_question' question.id  %}"
+                   class="small"><small>댓글 추가 ..</small></a>
+            </div>
+            <!-- 질문 댓글 End -->
         </div>
     </div>
     <h5 class="border-bottom my-3 py-2">{{question.answer_set.count}}개의 답변이 있습니다.</h5>
@@ -18,9 +59,48 @@
         <div class="card-body">
             <div class="card-text" style="white-space: pre-line;">{{ answer.content }}</div>
             <div class="d-flex justify-content-end">
-                <div class="badge badge-light p-2">
-                    {{ answer.create_date }}
+                {% if answer.modify_date %}
+                <div class="badge badge-light p-2 text-left mx-3">
+                    <div class="mb-2">modified at</div>
+                    <div>{{ answer.modify_date }}</div>
                 </div>
+                {% endif %}
+                <div class="badge badge-light p-2 text-left">
+                    <div class="mb-2">{{ answer.author.username }}</div>
+                    <div>{{ answer.create_date }}</div>
+                </div>
+            </div>
+            {% if request.user == answer.author %}
+            <div class="my-3">
+                <a href="{% url 'pybo:answer_modify' answer.id  %}"
+                   class="btn btn-sm btn-outline-secondary">수정</a>
+                <a href="#" class="delete btn btn-sm btn-outline-secondary "
+                   data-uri="{% url 'pybo:answer_delete' answer.id  %}">삭제</a>
+            </div>
+            {% endif %}
+            {% if answer.comment_set.count > 0 %}
+            <div class="mt-3">
+            {% for comment in answer.comment_set.all %}
+                <div class="comment py-2 text-muted">
+                    <span style="white-space: pre-line;">{{ comment.content }}</span>
+                    <span>
+                        - {{ comment.author }}, {{ comment.create_date }}
+                        {% if comment.modify_date %}
+                        (수정:{{ comment.modify_date }})
+                        {% endif %}
+                    </span>
+                    {% if request.user == comment.author %}
+                    <a href="{% url 'pybo:comment_modify_answer' comment.id  %}" class="small">수정</a>,
+                    <a href="#" class="small delete"
+                       data-uri="{% url 'pybo:comment_delete_answer' comment.id  %}">삭제</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            </div>
+            {% endif %}
+            <div>
+                <a href="{% url 'pybo:comment_create_answer' answer.id  %}"
+                   class="small"><small>댓글 추가 ..</small></a>
             </div>
         </div>
     </div>
@@ -28,20 +108,31 @@
     <form action="{% url 'pybo:answer_create' question.id %}" method="post" class="my-3">
         {% csrf_token %}
         {% if form.errors %}
-            <div class="alert alert-danger" role="alert">
-            {% for field in form %}
-                {% if field.errors %}
-                <strong>{{ field.label }}</strong>
-                {{ field.errors }}
-                {% endif %}
-            {% endfor %}
-            </div>
+        <div class="alert alert-danger" role="alert">
+        {% for field in form %}
+            {% if field.errors %}
+            <strong>{{ field.label }}</strong>
+            {{ field.errors }}
+            {% endif %}
+        {% endfor %}
+        </div>
         {% endif %}
         <div class="form-group">
-            <textarea name="content" id="content" class="form-control" rows="10"></textarea>
+            <textarea {% if not user.is_authenticated %}disabled{% endif %}
+              name="content" id="content" class="form-control" rows="10"></textarea>
         </div>
         <input type="submit" value="답변등록" class="btn btn-primary">
     </form>
 </div>
 {% endblock %}
-
+{% block script %}
+<script type='text/javascript'>
+$(document).ready(function(){
+    $(".delete").on('click', function() {
+        if(confirm("정말로 삭제하시겠습니까?")) {
+            location.href = $(this).data('uri');
+        }
+    });
+});
+</script>
+{% endblock %}
