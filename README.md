@@ -65,9 +65,16 @@
 1. Make sure the static IP address is set as [here][2]
 1. `python manage.py runserver 0:8000`
 
+# Dev Environment
+
+- window 10
+- python 3.6.8
+- django 3.1.5
+
 # Reference
 
 [Do it! 점프 투 장고][1]
 
 [1]: https://wikidocs.net/75559
 [2]: https://github.com/hwanseok-dev/The-PyBo/blob/master/config/settings.py#L24
+
